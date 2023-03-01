@@ -1,6 +1,7 @@
 /** 整形後の型 */
 /** 取得したチャット詳細 */
 export interface ChatItem {
+    id: string;
     author: {
         name: string;
         thumbnail?: ImageItem;
@@ -23,7 +24,7 @@ export interface ChatItem {
     timestamp: Date;
 }
 /** チャットメッセージの文字列or絵文字 */
-export declare type MessageItem = {
+export type MessageItem = {
     text: string;
 } | EmojiItem;
 /** 画像 */
@@ -36,3 +37,10 @@ export interface EmojiItem extends ImageItem {
     emojiText: string;
     isCustomEmoji: boolean;
 }
+export type YoutubeId = {
+    channelId: string;
+} | {
+    liveId: string;
+} | {
+    handle: string;
+};

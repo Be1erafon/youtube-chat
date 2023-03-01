@@ -35,8 +35,8 @@ class LiveChat extends events_1.EventEmitter {
         _LiveChat_options.set(this, void 0);
         _LiveChat_interval.set(this, 1000);
         _LiveChat_id.set(this, void 0);
-        if (!id || (!("channelId" in id) && !("liveId" in id))) {
-            throw TypeError("Required channelId or liveId.");
+        if (!id || (!("channelId" in id) && !("liveId" in id) && !("handle" in id))) {
+            throw TypeError("Required channelId or liveId or handle.");
         }
         else if ("liveId" in id) {
             this.liveId = id.liveId;

@@ -58,7 +58,7 @@ export interface MessageEmoji {
         isCustomEmoji?: true;
     };
 }
-export declare type MessageRun = MessageText | MessageEmoji;
+export type MessageRun = MessageText | MessageEmoji;
 export interface AuthorBadge {
     liveChatAuthorBadgeRenderer: {
         customThumbnail?: {

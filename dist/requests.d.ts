@@ -5,6 +5,8 @@ export declare function fetchLivePage(id: {
     channelId: string;
 } | {
     liveId: string;
+} | {
+    handle: string;
 }): Promise<FetchOptions & {
     liveId: string;
 }>;

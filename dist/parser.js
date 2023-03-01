@@ -140,6 +140,7 @@ function parseActionToChatItem(data) {
     }
     const authorNameText = (_b = (_a = messageRenderer.authorName) === null || _a === void 0 ? void 0 : _a.simpleText) !== null && _b !== void 0 ? _b : "";
     const ret = {
+        id: messageRenderer.id,
         author: {
             name: authorNameText,
             thumbnail: parseThumbnailToImageItem(messageRenderer.authorPhoto.thumbnails, authorNameText),
