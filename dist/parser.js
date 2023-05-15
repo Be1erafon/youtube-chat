@@ -31,12 +31,36 @@ function getOptionsFromLivePage(data) {
         throw new Error("Client Version was not found");
     }
     let continuation;
-    const continuationResult = data.match(/['"]continuation['"]:\s*['"](.+?)['"]/);
-    if (continuationResult) {
-        continuation = continuationResult[1];
+    let cursor = data.indexOf('viewSelector');
+    try {
+        if (cursor === -1) {
+            throw 'break';
+        }
+        cursor += 12; // length of "viewSelector"
+        while (data[cursor] !== '{')
+            cursor++; // find the starting of json
+        let json = "{";
+        let open = 1;
+        do {
+            json += data[++cursor];
+            if (data[cursor] === '{') {
+                open++;
+            }
+            else if (data[cursor] === '}') {
+                open--;
+            }
+        } while (open > 0 && cursor < data.length);
+        const vsData = JSON.parse(json);
+        continuation = vsData.sortFilterSubMenuRenderer.subMenuItems[1].continuation.reloadContinuationData.continuation;
     }
-    else {
-        throw new Error("Continuation was not found");
+    catch (_) {
+        const continuationResult = data.match(/['"]continuation['"]:\s*['"](.+?)['"]/);
+        if (continuationResult) {
+            continuation = continuationResult[1];
+        }
+        else {
+            throw new Error("Continuation was not found");
+        }
     }
     return {
         liveId,
