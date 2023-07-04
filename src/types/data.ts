@@ -41,3 +41,12 @@ export interface EmojiItem extends ImageItem {
 }
 
 export type YoutubeId = { channelId: string } | { liveId: string } | { handle: string }
+export type ProxyItem = { 
+  protocol: string, 
+  host: string, 
+  port: number, 
+  auth?: {
+    username: string,
+    password: string
+  } 
+}

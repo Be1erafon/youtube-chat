@@ -1,14 +1,18 @@
 import { EventEmitter } from "events"
 import TypedEmitter from "typed-emitter"
-import { ChatItem, YoutubeId } from "./types/data"
+import { ChatItem, ProxyItem, YoutubeId } from "./types/data"
 import { FetchOptions } from "./types/yt-response"
 import { fetchChat, fetchLivePage } from "./requests"
+import { HttpsProxyAgent } from "https-proxy-agent"
+import { SocksProxyAgent } from 'socks-proxy-agent'
+import { Agent } from "http"
 
 type LiveChatEvents = {
   start: (liveId: string) => void
   end: (reason?: string) => void
   chat: (chatItem: ChatItem) => void
   error: (err: Error | unknown) => void
+  proxyUpdate: (list: ProxyItem[]) => void
 }
 
 /**
@@ -20,8 +24,9 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
   #options?: FetchOptions
   readonly #interval: number = 1000
   readonly #id: YoutubeId
+  #agents: Agent[] = [];
 
-  constructor(id: YoutubeId, interval = 1000) {
+  constructor(id: YoutubeId, proxyList: ProxyItem[] = [], interval = 1000) {
     super()
     if (!id || (!("channelId" in id) && !("liveId" in id) && !("handle" in id))) {
       throw TypeError("Required channelId or liveId or handle.")
@@ -31,6 +36,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
 
     this.#id = id
     this.#interval = interval
+    this.#agents = this.createAgents(proxyList)
   }
 
   async start(): Promise<boolean> {
@@ -60,6 +66,10 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     }
   }
 
+  proxyUpdate( list: ProxyItem[] ) {
+    this.#agents = this.createAgents(list)
+  }
+
   async #execute() {
     if (!this.#options) {
       const message = "Not found options"
@@ -69,12 +79,32 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     }
 
     try {
-      const [chatItems, continuation] = await fetchChat(this.#options)
+      const agent = this.getRandomProxyAgetn();
+      const [chatItems, continuation] = await fetchChat(this.#options, agent)
       chatItems.forEach((chatItem) => this.emit("chat", chatItem))
 
       this.#options.continuation = continuation
     } catch (err) {
       this.emit("error", err)
     }
+  }
+
+  private createAgents(proxyList: ProxyItem[]) {
+    return proxyList.filter(p => [ "http", "https", "socks", "socks4", "socks4a", "socks5", "socks5h" ].includes(p.protocol)).map(p => {
+      const auth = p.auth && p.auth.username && p.auth.password 
+        ? `${p.auth.username}:${p.auth.password}@` 
+        : "";
+
+      return p.protocol == "http" || p.protocol == "https" 
+        ? new HttpsProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`) 
+        : new SocksProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`);
+    })
+  }
+
+  private getRandomProxyAgetn() {
+    if (this.#agents.length === 0) return;
+  
+    const index = Math.floor(Math.random() * this.#agents.length);
+    return this.#agents[index];
   }
 }
