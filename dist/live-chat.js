@@ -19,6 +19,9 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 var _LiveChat_instances, _LiveChat_observer, _LiveChat_options, _LiveChat_interval, _LiveChat_id, _LiveChat_agents, _LiveChat_execute;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LiveChat = void 0;
@@ -26,6 +29,7 @@ const events_1 = require("events");
 const requests_1 = require("./requests");
 const https_proxy_agent_1 = require("https-proxy-agent");
 const socks_proxy_agent_1 = require("socks-proxy-agent");
+const crypto_1 = __importDefault(require("crypto"));
 /**
  * YouTubeライブチャット取得イベント
  */
@@ -44,6 +48,7 @@ class LiveChat extends events_1.EventEmitter {
         else if ("liveId" in id) {
             this.liveId = id.liveId;
         }
+        this.instanceId = crypto_1.default.randomUUID();
         __classPrivateFieldSet(this, _LiveChat_id, id, "f");
         __classPrivateFieldSet(this, _LiveChat_interval, interval, "f");
         __classPrivateFieldSet(this, _LiveChat_agents, this.createAgents(proxyList), "f");
@@ -106,7 +111,10 @@ _LiveChat_observer = new WeakMap(), _LiveChat_options = new WeakMap(), _LiveChat
         try {
             const agent = this.getRandomProxyAgetn();
             const [chatItems, continuation] = yield (0, requests_1.fetchChat)(__classPrivateFieldGet(this, _LiveChat_options, "f"), agent);
-            chatItems.forEach((chatItem) => this.emit("chat", chatItem));
+            chatItems.forEach((chatItem) => {
+                chatItem.instanceId = this.instanceId;
+                this.emit("chat", chatItem);
+            });
             __classPrivateFieldGet(this, _LiveChat_options, "f").continuation = continuation;
         }
         catch (err) {

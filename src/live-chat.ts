@@ -6,6 +6,7 @@ import { fetchChat, fetchLivePage } from "./requests"
 import { HttpsProxyAgent } from "https-proxy-agent"
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import { Agent } from "http"
+import crypto from "crypto";
 
 type LiveChatEvents = {
   start: (liveId: string) => void
@@ -19,6 +20,7 @@ type LiveChatEvents = {
  * YouTubeライブチャット取得イベント
  */
 export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEvents>) {
+  instanceId: string
   liveId?: string
   #observer?: NodeJS.Timer
   #options?: FetchOptions
@@ -33,7 +35,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     } else if ("liveId" in id) {
       this.liveId = id.liveId
     }
-
+    this.instanceId = crypto.randomUUID()
     this.#id = id
     this.#interval = interval
     this.#agents = this.createAgents(proxyList)
@@ -81,7 +83,10 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     try {
       const agent = this.getRandomProxyAgetn();
       const [chatItems, continuation] = await fetchChat(this.#options, agent)
-      chatItems.forEach((chatItem) => this.emit("chat", chatItem))
+      chatItems.forEach((chatItem) => {
+        chatItem.instanceId = this.instanceId
+        this.emit("chat", chatItem)
+      })
 
       this.#options.continuation = continuation
     } catch (err) {

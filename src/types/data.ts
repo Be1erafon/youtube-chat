@@ -23,6 +23,7 @@ export interface ChatItem {
   isOwner: boolean
   isModerator: boolean
   timestamp: Date
+  instanceId?: string
 }
 
 /** チャットメッセージの文字列or絵文字 */
