@@ -79,11 +79,11 @@ export function getOptionsFromLivePage(data: string): FetchOptions & { liveId: s
 }
 
 /** get_live_chat レスポンスを変換 */
-export function parseChatData(data: GetLiveChatResponse): [ChatItem[], string] {
+export function parseChatData(data: GetLiveChatResponse, requestId: string, durationRequest: number): [ChatItem[], string] {
   let chatItems: ChatItem[] = []
   if (data.continuationContents.liveChatContinuation.actions) {
     chatItems = data.continuationContents.liveChatContinuation.actions
-      .map((v) => parseActionToChatItem(v))
+      .map((v) => parseActionToChatItem(v, requestId, durationRequest))
       .filter((v): v is NonNullable<ChatItem> => v !== null)
   }
 
@@ -164,7 +164,7 @@ function rendererFromAction(
 }
 
 /** an action to a ChatItem */
-function parseActionToChatItem(data: Action): ChatItem | null {
+function parseActionToChatItem(data: Action, requestId: string, durationRequest: number): ChatItem | null {
   const messageRenderer = rendererFromAction(data)
   if (messageRenderer === null) {
     return null
@@ -190,6 +190,8 @@ function parseActionToChatItem(data: Action): ChatItem | null {
     isVerified: false,
     isModerator: false,
     timestamp: new Date(Number(messageRenderer.timestampUsec) / 1000),
+    requestId,
+    durationRequest
   }
 
   if (messageRenderer.authorBadges) {

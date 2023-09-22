@@ -23,6 +23,8 @@ export interface ChatItem {
     isModerator: boolean;
     timestamp: Date;
     instanceId?: string;
+    requestId: string;
+    durationRequest: number;
 }
 /** チャットメッセージの文字列or絵文字 */
 export type MessageItem = {

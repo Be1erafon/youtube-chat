@@ -8,6 +8,8 @@ axios.defaults.headers.common["Accept-Encoding"] = "utf-8"
 
 export async function fetchChat(options: FetchOptions, httpsAgent?: Agent): Promise<[ChatItem[], string]> {
   const url = `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${options.apiKey}`
+
+  const start = Date.now();
   const res = await axios.post(url, {
     context: {
       client: {
@@ -18,8 +20,9 @@ export async function fetchChat(options: FetchOptions, httpsAgent?: Agent): Prom
     httpsAgent,
     continuation: options.continuation,
   })
-
-  return parseChatData(res.data)
+  const durationRequest = Date.now() - start;
+  const requestId = crypto.randomUUID()
+  return parseChatData(res.data, requestId, durationRequest)
 }
 
 export async function fetchLivePage(id: { channelId: string } | { liveId: string } | { handle: string }) {

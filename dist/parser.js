@@ -71,11 +71,11 @@ function getOptionsFromLivePage(data) {
 }
 exports.getOptionsFromLivePage = getOptionsFromLivePage;
 /** get_live_chat レスポンスを変換 */
-function parseChatData(data) {
+function parseChatData(data, requestId, durationRequest) {
     let chatItems = [];
     if (data.continuationContents.liveChatContinuation.actions) {
         chatItems = data.continuationContents.liveChatContinuation.actions
-            .map((v) => parseActionToChatItem(v))
+            .map((v) => parseActionToChatItem(v, requestId, durationRequest))
             .filter((v) => v !== null);
     }
     const continuationData = data.continuationContents.liveChatContinuation.continuations[0];
@@ -149,7 +149,7 @@ function rendererFromAction(action) {
     return null;
 }
 /** an action to a ChatItem */
-function parseActionToChatItem(data) {
+function parseActionToChatItem(data, requestId, durationRequest) {
     var _a, _b, _c;
     const messageRenderer = rendererFromAction(data);
     if (messageRenderer === null) {
@@ -176,6 +176,8 @@ function parseActionToChatItem(data) {
         isVerified: false,
         isModerator: false,
         timestamp: new Date(Number(messageRenderer.timestampUsec) / 1000),
+        requestId,
+        durationRequest
     };
     if (messageRenderer.authorBadges) {
         for (const entry of messageRenderer.authorBadges) {
