@@ -30,7 +30,7 @@ function fetchChat(options, agents, httpsAgent) {
             },
             httpsAgent,
             continuation: options.continuation,
-        }, Object.assign({}, agents));
+        });
         const durationRequest = Date.now() - start;
         const requestId = crypto_1.default.randomUUID();
         return (0, parser_1.parseChatData)(res.data, requestId, durationRequest);

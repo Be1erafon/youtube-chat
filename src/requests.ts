@@ -21,9 +21,6 @@ export async function fetchChat(options: FetchOptions, agents: { httpAgent: Agen
     httpsAgent,
     continuation: options.continuation,
   }, 
-  {
-    ...agents
-  } 
   )
   const durationRequest = Date.now() - start;
   const requestId = crypto.randomUUID()
