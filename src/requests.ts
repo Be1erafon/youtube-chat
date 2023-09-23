@@ -3,6 +3,7 @@ import { parseChatData, getOptionsFromLivePage } from "./parser"
 import { FetchOptions } from "./types/yt-response"
 import { ChatItem, YoutubeId } from "./types/data"
 import { Agent } from "http"
+import crypto from "crypto";
 
 axios.defaults.headers.common["Accept-Encoding"] = "utf-8"
 
