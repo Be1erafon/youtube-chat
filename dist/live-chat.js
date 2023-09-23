@@ -34,7 +34,7 @@ const crypto_1 = __importDefault(require("crypto"));
  * YouTubeライブチャット取得イベント
  */
 class LiveChat extends events_1.EventEmitter {
-    constructor(id, proxyList = [], interval = 1000) {
+    constructor(id, proxyList = [], httpAgents, interval = 1000) {
         super();
         _LiveChat_instances.add(this);
         _LiveChat_observer.set(this, void 0);
@@ -52,6 +52,7 @@ class LiveChat extends events_1.EventEmitter {
         __classPrivateFieldSet(this, _LiveChat_id, id, "f");
         __classPrivateFieldSet(this, _LiveChat_interval, interval, "f");
         __classPrivateFieldSet(this, _LiveChat_agents, this.createAgents(proxyList), "f");
+        this.httpAgents = httpAgents;
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -110,7 +111,7 @@ _LiveChat_observer = new WeakMap(), _LiveChat_options = new WeakMap(), _LiveChat
         }
         try {
             const agent = this.getRandomProxyAgetn();
-            const [chatItems, continuation] = yield (0, requests_1.fetchChat)(__classPrivateFieldGet(this, _LiveChat_options, "f"), agent);
+            const [chatItems, continuation] = yield (0, requests_1.fetchChat)(__classPrivateFieldGet(this, _LiveChat_options, "f"), this.httpAgents, agent);
             chatItems.forEach((chatItem) => {
                 chatItem.instanceId = this.instanceId;
                 this.emit("chat", chatItem);

@@ -27,8 +27,9 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
   readonly #interval: number = 1000
   readonly #id: YoutubeId
   #agents: Agent[] = [];
+  httpAgents: { httpAgent: Agent, httpsAgent: Agent };
 
-  constructor(id: YoutubeId, proxyList: ProxyItem[] = [], interval = 1000) {
+  constructor(id: YoutubeId, proxyList: ProxyItem[] = [], httpAgents: { httpAgent: Agent, httpsAgent: Agent }, interval = 1000) {
     super()
     if (!id || (!("channelId" in id) && !("liveId" in id) && !("handle" in id))) {
       throw TypeError("Required channelId or liveId or handle.")
@@ -39,6 +40,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     this.#id = id
     this.#interval = interval
     this.#agents = this.createAgents(proxyList)
+    this.httpAgents = httpAgents
   }
 
   async start(): Promise<boolean> {
@@ -82,7 +84,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
 
     try {
       const agent = this.getRandomProxyAgetn();
-      const [chatItems, continuation] = await fetchChat(this.#options, agent)
+      const [chatItems, continuation] = await fetchChat(this.#options, this.httpAgents, agent)
       chatItems.forEach((chatItem) => {
         chatItem.instanceId = this.instanceId
         this.emit("chat", chatItem)

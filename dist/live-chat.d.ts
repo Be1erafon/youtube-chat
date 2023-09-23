@@ -1,5 +1,7 @@
+/// <reference types="node" />
 import TypedEmitter from "typed-emitter";
 import { ChatItem, ProxyItem, YoutubeId } from "./types/data";
+import { Agent } from "http";
 type LiveChatEvents = {
     start: (liveId: string) => void;
     end: (reason?: string) => void;
@@ -15,7 +17,14 @@ export declare class LiveChat extends LiveChat_base {
     #private;
     instanceId: string;
     liveId?: string;
-    constructor(id: YoutubeId, proxyList?: ProxyItem[], interval?: number);
+    httpAgents: {
+        httpAgent: Agent;
+        httpsAgent: Agent;
+    };
+    constructor(id: YoutubeId, proxyList: ProxyItem[] | undefined, httpAgents: {
+        httpAgent: Agent;
+        httpsAgent: Agent;
+    }, interval?: number);
     start(): Promise<boolean>;
     stop(reason?: string): void;
     proxyUpdate(list: ProxyItem[]): void;

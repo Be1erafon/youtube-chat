@@ -16,7 +16,7 @@ exports.fetchLivePage = exports.fetchChat = void 0;
 const axios_1 = __importDefault(require("axios"));
 const parser_1 = require("./parser");
 axios_1.default.defaults.headers.common["Accept-Encoding"] = "utf-8";
-function fetchChat(options, httpsAgent) {
+function fetchChat(options, agents, httpsAgent) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${options.apiKey}`;
         const start = Date.now();
@@ -29,7 +29,7 @@ function fetchChat(options, httpsAgent) {
             },
             httpsAgent,
             continuation: options.continuation,
-        });
+        }, Object.assign({}, agents));
         const durationRequest = Date.now() - start;
         const requestId = crypto.randomUUID();
         return (0, parser_1.parseChatData)(res.data, requestId, durationRequest);
