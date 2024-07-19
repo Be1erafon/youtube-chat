@@ -22,26 +22,23 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _LiveChat_instances, _LiveChat_observer, _LiveChat_options, _LiveChat_interval, _LiveChat_id, _LiveChat_agents, _LiveChat_execute;
+var _LiveChat_instances, _LiveChat_observer, _LiveChat_options, _LiveChat_interval, _LiveChat_id, _LiveChat_execute;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LiveChat = void 0;
 const events_1 = require("events");
 const requests_1 = require("./requests");
-const https_proxy_agent_1 = require("https-proxy-agent");
-const socks_proxy_agent_1 = require("socks-proxy-agent");
 const crypto_1 = __importDefault(require("crypto"));
 /**
  * YouTubeライブチャット取得イベント
  */
 class LiveChat extends events_1.EventEmitter {
-    constructor(id, proxyList = [], httpAgents, interval = 1000) {
+    constructor(id, proxy_url, interval = 1000) {
         super();
         _LiveChat_instances.add(this);
         _LiveChat_observer.set(this, void 0);
         _LiveChat_options.set(this, void 0);
         _LiveChat_interval.set(this, 1000);
         _LiveChat_id.set(this, void 0);
-        _LiveChat_agents.set(this, []);
         if (!id || (!("channelId" in id) && !("liveId" in id) && !("handle" in id))) {
             throw TypeError("Required channelId or liveId or handle.");
         }
@@ -51,8 +48,7 @@ class LiveChat extends events_1.EventEmitter {
         this.instanceId = crypto_1.default.randomUUID();
         __classPrivateFieldSet(this, _LiveChat_id, id, "f");
         __classPrivateFieldSet(this, _LiveChat_interval, interval, "f");
-        __classPrivateFieldSet(this, _LiveChat_agents, this.createAgents(proxyList), "f");
-        this.httpAgents = httpAgents;
+        this.proxy_url = proxy_url;
     }
     start() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -60,7 +56,7 @@ class LiveChat extends events_1.EventEmitter {
                 return false;
             }
             try {
-                const options = yield (0, requests_1.fetchLivePage)(__classPrivateFieldGet(this, _LiveChat_id, "f"));
+                const options = yield (0, requests_1.fetchLivePage)(__classPrivateFieldGet(this, _LiveChat_id, "f"), this.proxy_url);
                 this.liveId = options.liveId;
                 __classPrivateFieldSet(this, _LiveChat_options, options, "f");
                 __classPrivateFieldSet(this, _LiveChat_observer, setInterval(() => __classPrivateFieldGet(this, _LiveChat_instances, "m", _LiveChat_execute).call(this), __classPrivateFieldGet(this, _LiveChat_interval, "f")), "f");
@@ -80,28 +76,9 @@ class LiveChat extends events_1.EventEmitter {
             this.emit("end", reason);
         }
     }
-    proxyUpdate(list) {
-        __classPrivateFieldSet(this, _LiveChat_agents, this.createAgents(list), "f");
-    }
-    createAgents(proxyList) {
-        return proxyList.filter(p => ["http", "https", "socks", "socks4", "socks4a", "socks5", "socks5h"].includes(p.protocol)).map(p => {
-            const auth = p.auth && p.auth.username && p.auth.password
-                ? `${p.auth.username}:${p.auth.password}@`
-                : "";
-            return p.protocol == "http" || p.protocol == "https"
-                ? new https_proxy_agent_1.HttpsProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`)
-                : new socks_proxy_agent_1.SocksProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`);
-        });
-    }
-    getRandomProxyAgetn() {
-        if (__classPrivateFieldGet(this, _LiveChat_agents, "f").length === 0)
-            return;
-        const index = Math.floor(Math.random() * __classPrivateFieldGet(this, _LiveChat_agents, "f").length);
-        return __classPrivateFieldGet(this, _LiveChat_agents, "f")[index];
-    }
 }
 exports.LiveChat = LiveChat;
-_LiveChat_observer = new WeakMap(), _LiveChat_options = new WeakMap(), _LiveChat_interval = new WeakMap(), _LiveChat_id = new WeakMap(), _LiveChat_agents = new WeakMap(), _LiveChat_instances = new WeakSet(), _LiveChat_execute = function _LiveChat_execute() {
+_LiveChat_observer = new WeakMap(), _LiveChat_options = new WeakMap(), _LiveChat_interval = new WeakMap(), _LiveChat_id = new WeakMap(), _LiveChat_instances = new WeakSet(), _LiveChat_execute = function _LiveChat_execute() {
     return __awaiter(this, void 0, void 0, function* () {
         if (!__classPrivateFieldGet(this, _LiveChat_options, "f")) {
             const message = "Not found options";
@@ -110,8 +87,7 @@ _LiveChat_observer = new WeakMap(), _LiveChat_options = new WeakMap(), _LiveChat
             return;
         }
         try {
-            const agent = this.getRandomProxyAgetn();
-            const [chatItems, continuation] = yield (0, requests_1.fetchChat)(__classPrivateFieldGet(this, _LiveChat_options, "f"), this.httpAgents, agent);
+            const [chatItems, continuation] = yield (0, requests_1.fetchChat)(__classPrivateFieldGet(this, _LiveChat_options, "f"), this.proxy_url);
             chatItems.forEach((chatItem) => {
                 chatItem.instanceId = this.instanceId;
                 this.emit("chat", chatItem);

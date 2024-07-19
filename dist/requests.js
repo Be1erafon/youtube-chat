@@ -15,11 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchLivePage = exports.fetchChat = void 0;
 const axios_1 = __importDefault(require("axios"));
 const parser_1 = require("./parser");
+const https_proxy_agent_1 = require("https-proxy-agent");
 const crypto_1 = __importDefault(require("crypto"));
 axios_1.default.defaults.headers.common["Accept-Encoding"] = "utf-8";
-function fetchChat(options, agents, httpsAgent) {
+function fetchChat(options, proxy_url) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${options.apiKey}`;
+        const httpsAgent = new https_proxy_agent_1.HttpsProxyAgent(proxy_url);
         const start = Date.now();
         const res = yield axios_1.default.post(url, {
             context: {
@@ -28,22 +30,24 @@ function fetchChat(options, agents, httpsAgent) {
                     clientName: "WEB",
                 },
             },
-            httpsAgent,
             continuation: options.continuation,
-        }, Object.assign({}, agents));
+        }, {
+            httpsAgent
+        });
         const durationRequest = Date.now() - start;
         const requestId = crypto_1.default.randomUUID();
         return (0, parser_1.parseChatData)(res.data, requestId, durationRequest);
     });
 }
 exports.fetchChat = fetchChat;
-function fetchLivePage(id) {
+function fetchLivePage(id, proxy_url) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = generateLiveUrl(id);
         if (!url) {
             throw TypeError("not found id");
         }
-        const res = yield axios_1.default.get(url);
+        const httpsAgent = new https_proxy_agent_1.HttpsProxyAgent(proxy_url);
+        const res = yield axios_1.default.get(url, { httpsAgent });
         return (0, parser_1.getOptionsFromLivePage)(res.data.toString());
     });
 }
