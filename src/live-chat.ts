@@ -3,9 +3,6 @@ import TypedEmitter from "typed-emitter"
 import { ChatItem, ProxyItem, YoutubeId } from "./types/data"
 import { FetchOptions } from "./types/yt-response"
 import { fetchChat, fetchLivePage } from "./requests"
-import { HttpsProxyAgent } from "https-proxy-agent"
-import { SocksProxyAgent } from 'socks-proxy-agent'
-import { Agent } from "http"
 import crypto from "crypto";
 
 type LiveChatEvents = {
@@ -13,7 +10,6 @@ type LiveChatEvents = {
   end: (reason?: string) => void
   chat: (chatItem: ChatItem) => void
   error: (err: Error | unknown) => void
-  proxyUpdate: (list: ProxyItem[]) => void
 }
 
 /**
@@ -26,10 +22,9 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
   #options?: FetchOptions
   readonly #interval: number = 1000
   readonly #id: YoutubeId
-  #agents: Agent[] = [];
-  httpAgents: { httpAgent: Agent, httpsAgent: Agent };
+  proxy_url: string;
 
-  constructor(id: YoutubeId, proxyList: ProxyItem[] = [], httpAgents: { httpAgent: Agent, httpsAgent: Agent }, interval = 1000) {
+  constructor(id: YoutubeId, proxy_url: string, interval = 1000) {
     super()
     if (!id || (!("channelId" in id) && !("liveId" in id) && !("handle" in id))) {
       throw TypeError("Required channelId or liveId or handle.")
@@ -39,8 +34,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     this.instanceId = crypto.randomUUID()
     this.#id = id
     this.#interval = interval
-    this.#agents = this.createAgents(proxyList)
-    this.httpAgents = httpAgents
+    this.proxy_url = proxy_url
   }
 
   async start(): Promise<boolean> {
@@ -48,7 +42,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
       return false
     }
     try {
-      const options = await fetchLivePage(this.#id)
+      const options = await fetchLivePage(this.#id, this.proxy_url)
       this.liveId = options.liveId
       this.#options = options
 
@@ -70,10 +64,6 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     }
   }
 
-  proxyUpdate( list: ProxyItem[] ) {
-    this.#agents = this.createAgents(list)
-  }
-
   async #execute() {
     if (!this.#options) {
       const message = "Not found options"
@@ -83,8 +73,7 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     }
 
     try {
-      const agent = this.getRandomProxyAgetn();
-      const [chatItems, continuation] = await fetchChat(this.#options, this.httpAgents, agent)
+      const [chatItems, continuation] = await fetchChat(this.#options, this.proxy_url)
       chatItems.forEach((chatItem) => {
         chatItem.instanceId = this.instanceId
         this.emit("chat", chatItem)
@@ -94,24 +83,5 @@ export class LiveChat extends (EventEmitter as new () => TypedEmitter<LiveChatEv
     } catch (err) {
       this.emit("error", err)
     }
-  }
-
-  private createAgents(proxyList: ProxyItem[]) {
-    return proxyList.filter(p => [ "http", "https", "socks", "socks4", "socks4a", "socks5", "socks5h" ].includes(p.protocol)).map(p => {
-      const auth = p.auth && p.auth.username && p.auth.password 
-        ? `${p.auth.username}:${p.auth.password}@` 
-        : "";
-
-      return p.protocol == "http" || p.protocol == "https" 
-        ? new HttpsProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`) 
-        : new SocksProxyAgent(`${p.protocol}://${auth}${p.host}:${p.port}`);
-    })
-  }
-
-  private getRandomProxyAgetn() {
-    if (this.#agents.length === 0) return;
-  
-    const index = Math.floor(Math.random() * this.#agents.length);
-    return this.#agents[index];
   }
 }
